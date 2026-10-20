@@ -1,0 +1,55 @@
+
+name: Build Retro Game Station
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "RetroGameStation.ino"
+      - ".github/workflows/build.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: arduino/setup-arduino-cli@v2
+
+      - name: Install ESP32
+        run: |
+          arduino-cli config init
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32
+
+      - name: Install TFT_eSPI
+        run: arduino-cli lib install TFT_eSPI
+
+      - name: Configure display
+        run: |
+          mkdir -p "$HOME/Arduino/libraries/TFT_eSPI"
+          cat > "$HOME/Arduino/libraries/TFT_eSPI/User_Setup.h" <<'EOF'
+          #define USER_SETUP_INFO "Retro Game Station"
+          #define ST7789_DRIVER
+          #define TFT_WIDTH 240
+          #define TFT_HEIGHT 240
+          #define TFT_MOSI 23
+          #define TFT_SCLK 18
+          #define TFT_CS -1
+          #define TFT_DC 2
+          #define TFT_RST 4
+          #define LOAD_GLCD
+          #define SPI_FREQUENCY 27000000
+          EOF
+
+      - name: Compile
+        run: |
+          arduino-cli compile \
+            --fqbn esp32:esp32:esp32 \
+            --output-dir build \
+            RetroGameStation
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: retro-game-station-build
+          path: build/*.bin
