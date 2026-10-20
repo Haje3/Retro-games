@@ -1,13 +1,5 @@
 
-name: Build Retro Game Station
-run:
-     mkdir -p RetroGameStation
-      cp RetroGameStation.ino RetroGameStation/
-      arduino-cli compile \
-        --fqbn esp32:esp32:esp32 \
-        --output-dir build \
-        RetroGameStation
-            
+name: Build Retro Game Station      
 on:
   workflow_dispatch:
   push:
@@ -51,10 +43,12 @@ jobs:
 
       - name: Compile
         run: |
+          mkdir -p RetroGameStation
+          cp RetroGameStation.ino RetroGameStation/
           arduino-cli compile \
-            --fqbn esp32:esp32:esp32 \
-            --output-dir build \
-            RetroGameStation
+          --fqbn esp32:esp32:esp32 \
+          --output-dir build \
+          RetroGameStation
 
       - uses: actions/upload-artifact@v4
         with:
