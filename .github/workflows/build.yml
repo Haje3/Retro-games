@@ -1,6 +1,13 @@
 
 name: Build Retro Game Station
-
+run: |
+     mkdir -p RetroGameStation
+      cp RetroGameStation.ino RetroGameStation/
+      arduino-cli compile \
+        --fqbn esp32:esp32:esp32 \
+        --output-dir build \
+        RetroGameStation
+            
 on:
   workflow_dispatch:
   push:
