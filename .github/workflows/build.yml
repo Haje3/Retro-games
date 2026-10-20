@@ -1,6 +1,6 @@
 
 name: Build Retro Game Station
-run: |
+run: 
      mkdir -p RetroGameStation
       cp RetroGameStation.ino RetroGameStation/
       arduino-cli compile \
