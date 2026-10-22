@@ -1,22 +1,21 @@
-
 name: Build Retro Game Station
 
 on:
   workflow_dispatch:
   push:
-    paths:
-      - "RetroGameStation/**"
-      - ".github/workflows/main.yml"
+    branches: [main, master]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      - uses: arduino/setup-arduino-cli@v2
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
 
-      - name: Install ESP32 platform
+      - name: Configure Arduino CLI
         run: |
           arduino-cli config init
           arduino-cli core update-index
@@ -25,34 +24,43 @@ jobs:
       - name: Install TFT_eSPI
         run: arduino-cli lib install TFT_eSPI
 
-      - name: Configure display
+      - name: Configure TFT_eSPI for this display
+        shell: bash
         run: |
-          mkdir -p "$HOME/Arduino/libraries/TFT_eSPI"
-          cat > "$HOME/Arduino/libraries/TFT_eSPI/User_Setup.h" <<'EOF'
-          #define USER_SETUP_INFO "Retro Game Station"
+          SETUP="$HOME/Arduino/libraries/TFT_eSPI/User_Setup.h"
+          test -f "$SETUP"
+          cat > "$SETUP" <<'SETUP_EOF'
+          #ifndef USER_SETUP_LOADED
+          #define USER_SETUP_LOADED
+          #endif
+          #define USER_SETUP_INFO "Retro Game Station ESP32 DevKit V1 ST7789 240x240"
           #define ST7789_DRIVER
-          #define TFT_WIDTH 240
+          #define TFT_WIDTH  240
           #define TFT_HEIGHT 240
           #define TFT_MOSI 23
           #define TFT_SCLK 18
-          #define TFT_CS -1
-          #define TFT_DC 2
-          #define TFT_RST 4
+          #define TFT_CS   -1
+          #define TFT_DC    2
+          #define TFT_RST   4
           #define LOAD_GLCD
           #define LOAD_FONT2
           #define LOAD_FONT4
-          #define SPI_FREQUENCY 27000000
-          EOF
+          #define LOAD_FONT6
+          #define LOAD_FONT7
+          #define LOAD_FONT8
+          #define LOAD_GFXFF
+          #define SPI_FREQUENCY  27000000
+          SETUP_EOF
 
-      - name: Compile
+      - name: Compile firmware
         run: |
-          arduino-cli compile \
-            --fqbn esp32:esp32:esp32 \
-            --output-dir build \
-            RetroGameStation
+          mkdir -p build
+          arduino-cli compile --fqbn esp32:esp32:esp32 --output-dir build RetroGameStation
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload firmware binaries
+        uses: actions/upload-artifact@v4
         with:
-          name: retro-game-station-build
+          name: RetroGameStation-ESP32-binaries
           path: build/*.bin
           if-no-files-found: error
+          retention-days: 14
