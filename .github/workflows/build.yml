@@ -1,11 +1,12 @@
 
-name: Build Retro Game Station      
+name: Build Retro Game Station
+
 on:
   workflow_dispatch:
   push:
     paths:
-      - "RetroGameStation.ino"
-      - ".github/workflows/build.yml"
+      - "RetroGameStation/**"
+      - ".github/workflows/main.yml"
 
 jobs:
   build:
@@ -15,7 +16,7 @@ jobs:
 
       - uses: arduino/setup-arduino-cli@v2
 
-      - name: Install ESP32
+      - name: Install ESP32 platform
         run: |
           arduino-cli config init
           arduino-cli core update-index
@@ -38,19 +39,20 @@ jobs:
           #define TFT_DC 2
           #define TFT_RST 4
           #define LOAD_GLCD
+          #define LOAD_FONT2
+          #define LOAD_FONT4
           #define SPI_FREQUENCY 27000000
           EOF
 
       - name: Compile
         run: |
-          mkdir -p RetroGameStation
-          cp RetroGameStation.ino RetroGameStation/
           arduino-cli compile \
-          --fqbn esp32:esp32:esp32 \
-          --output-dir build \
-          RetroGameStation
+            --fqbn esp32:esp32:esp32 \
+            --output-dir build \
+            RetroGameStation
 
       - uses: actions/upload-artifact@v4
         with:
           name: retro-game-station-build
           path: build/*.bin
+          if-no-files-found: error
